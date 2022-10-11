@@ -63,7 +63,7 @@ jobs:
             npm run test
   
 workflows:
-  default:
+  my_default:
     jobs:
       - build-frontend
       - build-backend
