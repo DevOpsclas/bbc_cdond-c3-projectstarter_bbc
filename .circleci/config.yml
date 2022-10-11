@@ -68,7 +68,7 @@ jobs:
       - checkout
       - restore_cache:
            keys: [frontend-scan]
-      -run: 
+      - run: 
           name: run frontend scan
           command: |
             cd frontend
@@ -82,7 +82,7 @@ jobs:
       - checkout
       - restore_cache:
            keys: [backend-scan]
-      -run: 
+      - run: 
           name: run backend scan
           command: |
             cd backend
