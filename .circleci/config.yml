@@ -104,3 +104,5 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
+      - notify:
+          context: Slack_access_tocken
