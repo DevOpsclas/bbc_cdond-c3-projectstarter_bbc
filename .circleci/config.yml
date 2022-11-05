@@ -145,7 +145,7 @@ jobs:
       - run:
           name: Configure server
           command: |
-            ansible-playbook -i inventory.txt configure-server.yml
+            ansible-playbook -i configure-server.yml
           
       # Here's where you will add some code to rollback on failure 
       
