@@ -96,7 +96,15 @@ jobs:
     steps:
       - checkout
       - run: yum -y install tar gzip
-      
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+              
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -116,10 +124,29 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure       
-   
+  
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+    steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            exit 1
+      # Here's where you will add some code to rollback on failure 
+      
 workflows:
   my_default:
     jobs:
       
-      - deploy-infrastructure
+    
          
