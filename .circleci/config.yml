@@ -127,26 +127,30 @@ jobs:
   
   configure-infrastructure:
     docker:
-      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["46:92:9b:d7:f4:2f:53:91:b8:46:80:e8:5a:13:01:fe"]
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
       - run:
           name: Install dependencies
           command: |
-            # Your code here
-            exit 1
+            apk add --update ansible
+           
       - run:
           name: Configure server
           command: |
-            # Your code here
-            exit 1
+            ansible-playbook -i inventory.txt playbook.yml
+          
       # Here's where you will add some code to rollback on failure 
       
 workflows:
   my_default:
     jobs:
       
-    
+    - configure-infrastructure
          
