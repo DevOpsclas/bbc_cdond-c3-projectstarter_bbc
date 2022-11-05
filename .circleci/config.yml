@@ -129,5 +129,5 @@ workflows:
   my_default:
     jobs:
       
-      - deploy-infrastructure:
+      - deploy-infrastructure
          
