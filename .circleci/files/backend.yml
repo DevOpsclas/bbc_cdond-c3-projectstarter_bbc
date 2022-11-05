@@ -3,7 +3,7 @@ Description: >
 
 Parameters:
   ID: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
-    Description: Unique identifier.
+    Description: udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
     Type: String
 
 Resources:
