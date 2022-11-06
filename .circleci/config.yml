@@ -95,15 +95,25 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - run: yum -y install tar gzip
+      - run:
+          name: Installing dependencies
+          command: |
+            yum install -y tar gzip curl
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
-              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+              --stack-name backend-"${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
+            BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --output text)
+            echo $BACKEND_IP
+            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT \
+              --data "$BACKEND_IP" https://api.memstash.io/values/BACKEND_IP"  
               
       - run:
           name: Ensure front-end infrastructure exist
@@ -111,19 +121,24 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
-              exit 1
+              --stack-name frontend-"${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            # Your code here
-            exit 1
+            echo "[web]" > .circleci/ansible/inventory.txt
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --output text >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure       
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations       
   
   configure-infrastructure:
     docker:
@@ -131,22 +146,36 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["46:92:9b:d7:f4:2f:53:91:b8:46:80:e8:5a:13:01:fe"]
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            
+          fingerprints: ['46:92:9b:d7:f4:2f:53:91:b8:46:80:e8:5a:13:01:fe']
+      - attach_workspace:
+          at: ~/            
       - run:
           name: Install dependencies
           command: |
+            apk add tar
+            apk add gzip curl
             apk add --update ansible
-           
+            pip install awscli           
       - run:
           name: Configure server
           command: |
-            ansible-playbook -i configure-server.yml
-          
-      # Here's where you will add some code to rollback on failure 
+            touch ~/project/backend/.env
+            echo ENVIRONMENT=production >> "backend/.env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            cat backend/.env
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+    - destroy-environment:
+        workflow_id: "${CIRCLE_WORKFLOW_ID}"
+    - revert-migrations
 
 workflows:
   my_default:
