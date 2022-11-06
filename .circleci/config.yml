@@ -171,10 +171,91 @@ jobs:
             cat backend/.env
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+      - destroy-environment:
+        workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations
+  run-migrations:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: install awscli
+          command: |
+            sudo apt-get -y update
+            sudo apt-get -y install python3 \
+              python3-pip \
+              python3-setuptools \
+              curl
+            pip3 install --upgrade pip
+            pip3 --no-cache-dir install --upgrade awscli
+      - run:
+          name: installing dependencies
+          command: |
+            cd backend
+            npm install
+      - run:
+          name: Run migrations
+          command: |
+            cd backend
+            npm run migrations > migration_result.txt
+      - run:
+          name: Send migration results to memstash
+          command: |
+            cd backend
+            if grep -q "has been executed successfully" migration_result.txt
+            then
+            echo "migrate successful"
+            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT \
+              --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            else
+            echo "didnt migrate successfully"
+            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT \
+              --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            fi
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations
+
+      
+  deploy-frontend:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            yum install gzip tar python3-pip curl -y
+            curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+            yum install nodejs npm -y
+            cd frontend
+            npm install
+      - run:
+          name: Get backend url
+          command: |
+            BACKEND_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
+              --request GET https://api.memstash.io/values/BACKEND_IP)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            cd frontend
+            npm update
+            npm run build
+            ls -alh
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            ls -alh
+            aws s3 cp dist/ s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --recursive
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations
       
 workflows:
   my_default:
     jobs:
       
-    - configure-infrastructure
+   - deploy-frontend:
+          requires: [ run-migrations ]
          
