@@ -135,8 +135,7 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/ansible/inventory.txt
-            - project/.circleci/ansible/configure-server.yml
+            
       - run:
           name: Install dependencies
           command: |
