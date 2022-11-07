@@ -191,14 +191,11 @@ jobs:
           name: Configure server
           command: |
            mkdir ".circleci/ansible/roles/configure-server/files/"
-            cp backend/package.json ".circleci/ansible/roles/configure-server/files/"
-            
+            cp backend/package.json ".circleci/ansible/roles/configure-server/files/"            
             inventory=".circleci/ansible/inventory.txt"
             playbook=".circleci/ansible/configure-server.yml"
             ansible-playbook -i $inventory $playbook
-      - destroy-environment:
-        workflow_id: "${CIRCLE_WORKFLOW_ID}"
-      - revert-migrations
+     
   run-migrations:
     docker:
       - image: circleci/node:13.8.0
