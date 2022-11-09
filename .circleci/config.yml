@@ -268,5 +268,6 @@ jobs:
 workflows:
   my_default:
     jobs:
-      - configure-infrastructure
+      - configure-infrastructure:
+          requires: [ deploy-infrastructure ]
          
