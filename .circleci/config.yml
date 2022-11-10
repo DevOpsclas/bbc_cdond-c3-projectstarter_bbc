@@ -135,18 +135,12 @@ jobs:
       - run:
           name: Ensure back-end infrastructure exists
           command: |
-            aws cloudformation deploy \
+             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
-              --stack-name backend-"${CIRCLE_WORKFLOW_ID}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
-            BACKEND_IP=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
-              --output text)
-            echo $BACKEND_IP
-            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT \
-              --data "$BACKEND_IP" https://api.memstash.io/values/BACKEND_IP           
+              --stack-name "backend-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}" 
+                       
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -158,11 +152,15 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            echo "[web]" > .circleci/ansible/inventory.txt
-            aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            cmd=$(aws ec2 describe-instances \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
-              --output text >> .circleci/ansible/inventory.txt
+              --query "Reservations[*].Instances[*].PublicDnsName" \
+              --output text)
+            
+            for dnsname in $cmd; do 
+              echo $dnsname >> .circleci/ansible/inventory.txt; 
+            done            
+            yum install -y tar gzip
             cat .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
