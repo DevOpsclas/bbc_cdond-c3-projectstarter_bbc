@@ -224,17 +224,23 @@ jobs:
       - run:
           name: Send migration results to memstash
           command: |
+            # Your code here
             cd backend
-            if grep -q "has been executed successfully" migration_result.txt
-            then
-            echo "migrate successful"
-            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT \
-              --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-            else
-            echo "didnt migrate successfully"
-            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT \
-              --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-            fi   
+            cat  migrations.log 
+            if ( grep -F "successfully"  migrations.log ); then
+              curl -H "Content-Type: text/plain" -H "token: ${MEMSTASH_TOKEN}" --request PUT --data "1"  "https://api.memstash.io/values/migrations_${CIRCLE_WORKFLOW_ID}"
+            else 
+              curl -H "Content-Type: text/plain" -H "token: ${MEMSTASH_TOKEN}" --request PUT --data "0"  "https://api.memstash.io/values/migrations_${CIRCLE_WORKFLOW_ID}"
+            fi
+      - persist_to_workspace:
+          root: ~/
+          paths: ["project/backend/dist"]
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          id: ${CIRCLE_WORKFLOW_ID}
+          isEmpty: "yes"
+          requireAWSCLI: "yes"
+          
   deploy-frontend:
     docker:
       - image: amazon/aws-cli
