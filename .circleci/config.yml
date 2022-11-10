@@ -236,10 +236,10 @@ jobs:
           root: ~/
           paths: ["project/backend/dist"]
       # Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          id: ${CIRCLE_WORKFLOW_ID}
-          isEmpty: "yes"
-          requireAWSCLI: "yes"
+      #- destroy-environment:
+      #    id: ${CIRCLE_WORKFLOW_ID}
+      #    isEmpty: "yes"
+      #    requireAWSCLI: "yes"
           
   deploy-frontend:
     docker:
