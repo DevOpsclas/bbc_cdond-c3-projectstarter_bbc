@@ -1,0 +1,22 @@
+---
+- name: "upgrade packages"
+  become: yes
+  apt:
+    upgrade: "yes"
+
+- name: "installing dependencies"
+  become: yes
+  npm:
+    path: /home/ubuntu/backend
+
+- name: "initialize pm2"
+  become: yes
+  shell: pm2 ls
+  args:
+    chdir: /home/ubuntu/backend
+
+- name: "start pm2"
+  become: yes
+  shell: pm2 start --name "backend" npm -- start
+  args:
+    chdir: /home/ubuntu/backend
