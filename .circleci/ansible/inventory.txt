@@ -1,2 +1,2 @@
 [web]
-35.174.4.183
+ec2-34-224-216-161.compute-1.amazonaws.com
