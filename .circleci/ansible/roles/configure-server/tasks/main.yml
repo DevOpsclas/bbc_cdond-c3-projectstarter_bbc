@@ -3,20 +3,16 @@
   become: yes
   apt:
     upgrade: "yes"
-
 - name: "installing dependencies"
   become: yes
+  apt:
+    name : ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
+- name: "install pm2"
+  become: true
   npm:
-    path: /home/ubuntu/backend
-
-- name: "initialize pm2"
-  become: yes
-  shell: pm2 ls
-  args:
-    chdir: /home/ubuntu/backend
-
-- name: "start pm2"
-  become: yes
-  shell: pm2 start --name "backend" npm -- start
-  args:
-    chdir: /home/ubuntu/backend
+    name: pm2
+    global: yes
+    production: yes
+    state: present
