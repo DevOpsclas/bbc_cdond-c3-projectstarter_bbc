@@ -391,7 +391,7 @@ jobs:
 workflows:
   my_default:
     jobs:
-      - deploy-frontend
-      - deploy-backend
-      - smoke-test:
-          requires: [deploy-frontend, deploy-backend] 
+      #- deploy-frontend
+      #- deploy-backend
+      - smoke-test
+        #  requires: [deploy-frontend, deploy-backend] 
