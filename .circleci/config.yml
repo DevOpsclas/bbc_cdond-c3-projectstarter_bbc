@@ -281,5 +281,5 @@ workflows:
   my_default:
     jobs:
       
-      - run-migrations:
+      - run-migrations
           
