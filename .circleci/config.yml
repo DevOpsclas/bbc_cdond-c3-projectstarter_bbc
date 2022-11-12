@@ -233,7 +233,7 @@ jobs:
           name: Send migration results to memstash
           command: |
             cd backend
-            if greq -q "has been executed successfully" project/backend/migrations.txt
+            if grep -q "has been executed successfully" project/backend/migrations.txt
             then
               curl -H "Content-Type: text/plain" -H "f83b2517-4e88-48b9-bf33-a9c3d5e2a864" --request PUT --data "MIGRATION_SUCCESS" https://api.memstash.io/values/url_${WORKFLOW_ID}
               echo "1"
