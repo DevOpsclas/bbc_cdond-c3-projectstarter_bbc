@@ -287,5 +287,5 @@ workflows:
   my_default:
     jobs:
       
-      - run-frontend
+      - deploy-frontend
           
