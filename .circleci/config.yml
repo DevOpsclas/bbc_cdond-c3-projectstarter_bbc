@@ -388,11 +388,43 @@ jobs:
               echo FAIL
               return 1
             fi
+      - destroy-environment
+      - revert-migrations 
+
+  # Promotion Phase
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["a5:a6:97:0c:39:6f:94:b8:d7:b9:78:5f:40:e4:57:08"]
+      - run: yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Get old stack workflow id
+          command: |
+            # Fetch the old stack workflow id
+            export OLD_WORKFLOW_ID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+            echo "Cloudfront distribution updated"
+      #- destroy-environment
+      #- revert-migrations
       
 workflows:
   my_default:
     jobs:
+      - cloudfront-update
       #- deploy-frontend
       #- deploy-backend
-      - smoke-test
+     # - smoke-test
         #  requires: [deploy-frontend, deploy-backend] 
