@@ -339,10 +339,10 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-      - destroy-environment:
-           workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
-      - revert-migrations:
-          workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
+      #- destroy-environment:
+       #    workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
+      #- revert-migrations:
+        #  workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
     smoke-test:
       docker:
         - image: python:3.11-rc-alpine
@@ -372,10 +372,10 @@ jobs:
               if curl "${API_URL}/api/status" | grep "ok"
               then
                 echo SUCCESS
-                exit 0
+                return 1
               else
                 echo FAIL
-                exit 1
+                return 1
               fi
         - run:
             name: Frontend smoke test.
@@ -384,13 +384,14 @@ jobs:
               echo ${URL}
               if curl -s ${URL} | grep "Welcome"
               then
-                exit 0
+                return 1
               else
-                exit 1
+                return 1
               fi
 workflows:
   my_default:
     jobs:
-      
+      - deploy-frontend
+      - deploy-backend
       - smoke-test:
           requires: [deploy-backend, deploy-frontend] 
