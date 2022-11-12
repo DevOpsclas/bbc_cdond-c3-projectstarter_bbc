@@ -225,22 +225,23 @@ jobs:
             npm install
       - run:
           name: Run migrations
+          working_directory: ./backend
           command: |
-            cd backend
+            
+            npm install
             npm run build
-            npm run migrations > migration.txt
+            npm run migrations > migrations_status.txt
+            cat ./migrations_status.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend
       - run:
-          name: Send migration results to memstash
+          name: Send migration results to memstash or kvdb.io
           command: |
-            cd backend
-            if grep -q "has been executed successfully" project/backend/migrations.txt
-            then
-              curl -H "Content-Type: text/plain" -H "f83b2517-4e88-48b9-bf33-a9c3d5e2a864" --request PUT --data "MIGRATION_SUCCESS" https://api.memstash.io/values/url_${WORKFLOW_ID}
-              echo "1"
-            else
-              curl -H "Content-Type: text/plain" -H "f83b2517-4e88-48b9-bf33-a9c3d5e2a864" \--request PUT --data "MIGRATION_FAILURE" https://api.memstash.io/values/url_${WORKFLOW_ID}
-              echo "0"
-            fi
+            echo "DB migration was successful, will update kvdb..."
+            curl -k https://kvdb.io/SGTo3Ds8ouwYMneqCQvHAQ/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d 'success'
+            
       # Here's where you will add some code to rollback on failure
       #- destroy-environment:
       #    id: ${CIRCLE_WORKFLOW_ID}
