@@ -283,9 +283,88 @@ jobs:
        #   workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
      # - revert-migrations:
       #    workflowID: ${CIRCLE_WORKFLOW_ID:0:7}             
+      
+   deploy-backend:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: 
+            - "42:4e:8d:a7:0f:0d:c0:81:1f:6f:7d:65:d1:aa:e5:49"
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add tar gzip nodejs npm
+            apk add --update ansible
+            apk add --no-cache curl
+            apk add --no-cache openssh-client
+            apk add --no-cache --upgrade bash
+            pip install awscli
+          # apk upgrade
+          # apk update
+            
+      - run:
+          name: Create env file
+          command: |
+            cd backend
+            touch .env
+            echo "TYPEORM_CONNECTION=postgres" >> .env
+            echo "TYPEORM_MIGRATIONS_DIR=./src/migrations" >> .env
+            echo "TYPEORM_ENTITIES=${TYPEORM_ENTITIES}" >> .env
+            echo "TYPEORM_MIGRATIONS=./src/migrations/*.ts" >> .env
+            # Use these values for the local PG database from the Docker Compose file
+            echo "TYPEORM_HOST=${TYPEORM_HOST}"  >> .env
+            echo "TYPEORM_PORT=${TYPEORM_PORT}" >> .env
+            echo "TYPEORM_USERNAME=${TYPEORM_USERNAME}" >> .env
+            echo "TYPEORM_PASSWORD=${TYPEORM_PASSWORD}" >> .env
+            echo "TYPEORM_DATABASE=${TYPEORM_DATABASE}" >> .env
+            cat .env
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            # Zip the directory
+            tar -C backend -czvf artifact.tar.gz .
+            mkdir -p /root/project
+            mv artifact.tar.gz /root/project/artifact.tar.gz
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i inventory.txt deploy-backend.yml     
+      #- destroy-environment:
+       #   workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
+     # - revert-migrations:
+      #    workflowID: ${CIRCLE_WORKFLOW_ID:0:7}    
 workflows:
   my_default:
     jobs:
-      
-      - deploy-frontend
-          
+      - build-frontend
+      - build-backend
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [main]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
