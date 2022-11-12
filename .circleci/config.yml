@@ -22,8 +22,8 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            SUCCESS=$(curl -H "token:  ${CIRCLE_WORKFLOW_ID}" \
-              --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
+            SUCCESS=$(curl -H "token:  ${CIRCLE_WORKFLOW_ID:0:7}" \
+              --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7})
             echo $SUCCESS
             if(( $SUCCESS==1 ));
             then
@@ -139,7 +139,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
               --stack-name "backend-${CIRCLE_WORKFLOW_ID}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}" 
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" 
                        
       - run:
           name: Ensure front-end infrastructure exist
@@ -147,13 +147,13 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-              --stack-name frontend-"${CIRCLE_WORKFLOW_ID}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
+              --stack-name frontend-"${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
              aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query "Reservations[*].Instances[*].PublicIpAddress" \
               --output text >> .circleci/ansible/inventory.txt                   
                 # yum install -y tar gzip
@@ -163,7 +163,7 @@ jobs:
           paths: ["project/.circleci/ansible/inventory.txt"]
           
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations  
   configure-infrastructure:
     docker:
@@ -200,7 +200,7 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml
             
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations
      
   run-migrations:
@@ -244,7 +244,7 @@ jobs:
             
       # Here's where you will add some code to rollback on failure
       #- destroy-environment:
-      #    id: ${CIRCLE_WORKFLOW_ID}
+      #    id: ${CIRCLE_WORKFLOW_ID:0:7}
       #    isEmpty: "yes"
       #    requireAWSCLI: "yes"
           
