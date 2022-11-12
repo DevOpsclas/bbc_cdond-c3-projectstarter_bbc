@@ -291,7 +291,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: 
-            - "42:4e:8d:a7:0f:0d:c0:81:1f:6f:7d:65:d1:aa:e5:49"
+            - "a5:a6:97:0c:39:6f:94:b8:d7:b9:78:5f:40:e4:57:08"
       - attach_workspace:
           at: ~/
       - run:
@@ -325,19 +325,15 @@ jobs:
       - run:
           name: Deploy backend
           command: |
+            mkdir ".circleci/ansible/roles/deploy/files/"
+            
             cd backend
-            npm i
-            npm run build
-            cd ..
-            # Zip the directory
-            tar -C backend -czvf artifact.tar.gz .
-            mkdir -p /root/project
-            mv artifact.tar.gz /root/project/artifact.tar.gz
-            cd .circleci/ansible
-            echo "Contents  of the inventory.txt file is -------"
-            cat inventory.txt
-            export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook -i inventory.txt deploy-backend.yml     
+            tar -c -zf artifacts.tar.gzip ./dist
+            cp -f ./artifacts.tar.gzip "../.circleci/ansible/roles/deploy/files/"
+            
+            inventory="../.circleci/ansible/inventory.txt"
+            playbook="../.circleci/ansible/deploy-backend.yml"
+            ansible-playbook -i $inventory $playbook    
       #- destroy-environment:
        #   workflowID: ${CIRCLE_WORKFLOW_ID:0:7}
      # - revert-migrations:
@@ -345,26 +341,5 @@ jobs:
 workflows:
   my_default:
     jobs:
-      - build-frontend
-      - build-backend
-      - test-frontend:
-          requires: [build-frontend]
-      - test-backend:
-          requires: [build-backend]
-      - scan-backend:
-          requires: [build-backend]
-      - scan-frontend:
-          requires: [build-frontend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: [master]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations]
+      
+      - deploy-backend
