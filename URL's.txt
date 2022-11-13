@@ -1,0 +1,6 @@
+[URL01] - https://github.com/DevOpsclas/bbc_cdond-c3-projectstarter_bbc
+[URL02] - http://udapeople-1c02767.s3-website-us-east-1.amazonaws.com/#/employees
+[URL03] - https://d1aohib6tli359.cloudfront.net
+[URL04] - http://ec2-34-205-157-108.compute-1.amazonaws.com:3030/api/status
+[URL05] - http://ec2-3-82-138-44.compute-1.amazonaws.com:9090/targets
+
