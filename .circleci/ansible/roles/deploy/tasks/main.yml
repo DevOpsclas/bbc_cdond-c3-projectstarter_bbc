@@ -8,20 +8,15 @@
   become: yes
   unarchive:
     src: ~/project/backend.tar.gz
-    dest: /home/ubuntu
+    dest: /home/ubuntu/backend.tar.gz
     
     
-- name: copy backend files
-  become: true
-  copy:
-    src:  ~/project/artifact.tar.gz
-    dest: /home/ubuntu/artifact.tar.gz
 - name: extract backend files
   become: true
   shell: |
     cd /home/ubuntu
-    tar -vxf artifact.tar.gz
-    rm artifact.tar.gz
+    tar -vxf backend.tar.gz
+    rm backend.tar.gz
 - name: start node
   become: true
   shell: |
