@@ -131,7 +131,8 @@ jobs:
       - run:
           name: Installing dependencies
           command: |
-            yum install -y tar gzip curl
+            yum -y install tar 
+            yum -y install gzip
       - run:
           name: Ensure back-end infrastructure exists
           command: |
