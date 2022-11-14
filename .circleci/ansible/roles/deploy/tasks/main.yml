@@ -10,23 +10,6 @@
     src: ~/project/backend.tar.gz
     dest: /home/ubuntu/backend.tar.gz
     
-    
-- name: extract backend files
-  become: true
-  shell: |
-    cd /home/ubuntu
-    tar -vxf backend.tar.gz
-    rm backend.tar.gz
-- name: start node
-  become: true
-  shell: |
-    cd /home/ubuntu
-    npm install
-    pm2 stop default
-    pm2 start npm -- start
-    
-    
-    
 - name: "installing dependencies"
   become: yes
   npm:
