@@ -1,91 +1,38 @@
 ---
-- name: "create directory"
-  file:
-    path: /home/ubuntu/backend
-    state: directory
-- name: "upgrade packages."
-  become: true
+- name: "upgrade packages"
+  become: yes
   apt:
     upgrade: "yes"
-- name: "install dependencies."
-  become: true
-  apt:
-    name: ["nodejs", "npm"]
-    update_cache: yes
-- name: "install pm2"
-  become: true
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
 
-# - name: copy dist backend folder to ec2 server
-#   become: yes
-#   copy:
-#     src: ~/project/artifact.tar.gz
-#     dest: /home/ubuntu/artifact.tar.gz
-
-# - name: prepare binaries
-#   become: true
-#   shell: |
-#     cd /home/ubuntu
-#     tar xvzf artifact.tar.gz -C
-
-- name: "copy the code into ec2 instance"
+- name: "Copy backend tar.gz file and unzipping it"
   become: yes
-  synchronize:
-    src: /root/project/backend
+  unarchive:
+    src: ~/project/backend.tar.gz
     dest: /home/ubuntu
-    recursive: true
 
-- name: "change ownership of node modules"
+- name: "installing dependencies"
   become: yes
-  shell: |
-    sudo chown -R ubuntu: backend
-    sudo chmod -R a+rwx backend
-  args:
-    chdir: /home/ubuntu
+  npm:
+    path: /home/ubuntu/backend
 
-- name: "install npm packages"
-  become: true
-  shell: |
-    npm install
-    npm run build
+- name: "run migration"
+  become: yes
+  shell: npm run migrations
   args:
     chdir: /home/ubuntu/backend
 
-- name: "compile npm packages"
-  become: true
-  command: npm run build
+- name: "reboot server"
+  become: yes
+  reboot:
+
+- name: "initialize pm2"
+  become: yes
+  shell: pm2 ls
   args:
     chdir: /home/ubuntu/backend
 
-- name: "start the code"
-  become: true
-  shell: |
-    # pm2 start -f ./main.js
-    # pm2 stop default
-    # pm2 start npm -- run start
-    pm2 start -f ./main.js
+- name: "start pm2"
+  become: yes
+  shell: pm2 start --name "backend" npm -- start
   args:
-    chdir: /home/ubuntu/backend/dist
-
-  # - name: "Deploy code"
-  #     become: true
-  #     shell: |
-  #       pm2 start -f ./main.js
-  #     args:
-  #         chdir: /home/ubuntu/backend/dist
-
-  environment:
-    ENVIRONMENT: production
-    TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
-    TYPEORM_MIGRATIONS_DIR: "./migrations"
-    TYPEORM_MIGRATIONS: "./migrations/*.js"
-    TYPEORM_ENTITIES: "./modules/domain/**/*.entity.js"
-    TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
-    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
-    TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
-    TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
-    TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
+    chdir: /home/ubuntu/backend
