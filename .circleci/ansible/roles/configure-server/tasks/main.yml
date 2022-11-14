@@ -10,7 +10,7 @@
     state: latest
     update_cache: yes
     
- - name: copy backend files
+- name: copy backend files
   become: true
   copy:
     src:  ~/project/artifact.tar.gz
