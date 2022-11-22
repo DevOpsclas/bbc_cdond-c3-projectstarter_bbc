@@ -13,9 +13,29 @@
     - ansible_stdout_callback: yaml
     
   pre_tasks:
+  - hosts: all
+  gather_facts: yes
+  become: yes
+  vars:
+    NODEJS_VERSION: "10"
+  pre_tasks:
+    - name: Install the gpg key for nodejs LTS
+      apt_key:
+        url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+        state: present
+    
+    - name: Install the nodejs LTS repos
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_{{ NODEJS_VERSION }}.x {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+    - name: Install the nodejs
+      apt:
+        name: nodejs
+        state: present
     - name: "wait 600 seconds for target connection to become reachable/usable."
       wait_for_connection:
-        #timeout: 100
+        timeout: 100
         
     - name: "install python for Ansible."
       become: true
