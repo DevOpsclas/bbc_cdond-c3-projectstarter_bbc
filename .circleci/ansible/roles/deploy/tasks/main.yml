@@ -13,11 +13,11 @@
   apt:
     name: ["nodejs", "npm"]
     update_cache: yes
-#- name: "Install Dependencies"
- # shell: |
-  #  cd /home/ubuntu/backend
-   # npm install
-    #npm run build
+- name: "Install Dependencies"
+  shell: |
+    cd /home/ubuntu/backend
+    npm install
+    npm run build
 - name: "Run the backend app"
   shell: |
     cd /home/ubuntu/backend
