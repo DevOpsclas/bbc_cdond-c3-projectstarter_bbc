@@ -13,9 +13,7 @@
     
   vars:
     NODEJS_VERSION: "10"
-    - ansible_stdout_callback: yaml
-   
-    
+    #- ansible_stdout_callback: yaml    
   #pre_tasks:
   #- hosts: all
   #gather_facts: yes
