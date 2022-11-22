@@ -11,14 +11,14 @@
     - ansible_python_interpreter: /usr/bin/python3
     - ansible_host_key_checking: false
     - ansible_stdout_callback: yaml
-     NODEJS_VERSION: "10"
+    NODEJS_VERSION: "10"
     
   #pre_tasks:
   #- hosts: all
   #gather_facts: yes
   #become: yes
   #vars:
-   # NODEJS_VERSION: "10"
+    #NODEJS_VERSION: "10"
   pre_tasks:
     - name: Install the gpg key for nodejs LTS
       apt_key:
